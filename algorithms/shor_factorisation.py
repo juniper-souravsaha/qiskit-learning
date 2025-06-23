@@ -31,18 +31,18 @@ def c_amod15(a, power):
         raise ValueError("'a' must be 2,4,7,8,11 or 13")
     U = QuantumCircuit(4)
     for _iteration in range(power):
-        if a in [2,13]:
+        if a in [2, 7,13]:
             U.swap(2,3)
             U.swap(1,2)
             U.swap(0,1)
-        if a in [7,8]:
+        if a in [8]:
             U.swap(0,1)
             U.swap(1,2)
             U.swap(2,3)
         if a in [4, 11]:
             U.swap(1,3)
             U.swap(0,2)
-        if a in [7,11,13]:
+        if a in [7, 11, 13]:
             for q in range(4):
                 U.x(q)
     U = U.to_gate()
@@ -80,10 +80,10 @@ def try_shor(N, a=None, n_count=8, plot=True):
 
     qc = qpe_period_finding_circuit(a, N, n_count)
     # qc.draw(fold=-1)  # -1 means 'do not fold'
-    backend = AerSimulator()
-    tqc = transpile(qc, backend)
+    sim = AerSimulator()
+    tqc = transpile(qc, sim)
     # qobj = assemble(tqc, shots=1)
-    result = backend.run(tqc).result()
+    result = sim.run(tqc, shots=1024).result()
     counts = result.get_counts()
 
     if plot:
@@ -111,5 +111,8 @@ def try_shor(N, a=None, n_count=8, plot=True):
 # Examples, this works only for N=15, a=2,4,7,8,11,13. c_amod15 is not
 # implemented for other values of a.
 try_shor(15, a=4, plot=False)
-try_shor(15, a=8, plot=False)
-try_shor(15, a=2, plot=False)
+# try_shor(15, a=11, plot=False)
+# try_shor(15, a=7, plot=False)
+# try_shor(15, a=8, plot=False)
+# try_shor(15, a=13, plot=False)
+# try_shor(15, a=2, plot=False)

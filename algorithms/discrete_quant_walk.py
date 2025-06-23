@@ -1,48 +1,38 @@
-from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, transpile
-from qiskit_aer import AerSimulator
+from qiskit import QuantumCircuit
+from qiskit.quantum_info import Statevector
 from qiskit.visualization import plot_histogram
 import matplotlib.pyplot as plt
 
-# Parameters
-num_positions = 8  # positions = 3 qubits
-num_steps = 5
+# 1 coin qubit + 2 position qubits
+n_steps = 3
+qc = QuantumCircuit(3, name='quantum_walk')
 
-# Registers
-pos = QuantumRegister(3, 'pos')  # 3 qubits for 8 positions
-coin = QuantumRegister(1, 'coin')  # 1 qubit coin
-c = ClassicalRegister(3, 'c')  # measurement for position
-qc = QuantumCircuit(pos, coin, c)
+def apply_coin(qc, coin):
+    qc.h(coin)
 
-# Initialize to middle position (e.g., pos 4) and coin state |0⟩
-qc.x(pos[2])  # |100⟩ = pos 4
+def apply_shift(qc, coin, pos0, pos1):
+    # Shift right if coin == 1
+    qc.cx(coin, pos0)
+    qc.cx(coin, pos1)
 
-# Define shift operator
-def shift_op(qc):
-    for i in range(8):
-        bin_str = f"{i:03b}"
-        for j in range(3):
-            if bin_str[j] == '1':
-                qc.x(pos[2-j])
-        # Controlled increment/decrement based on coin state
-        qc.mcx([coin[0]] + list(pos), pos[0])  # Fake shift logic
-        for j in range(3):
-            if bin_str[j] == '1':
-                qc.x(pos[2-j])
+    # Shift left if coin == 0 (simulate via X-coin and reuse)
+    qc.x(coin)
+    qc.cx(coin, pos0)
+    qc.cx(coin, pos1)
+    qc.x(coin)
 
-# Walk
-for _ in range(num_steps):
-    qc.h(coin)       # Coin flip
-    shift_op(qc)     # Shift depending on coin state
-    qc.barrier()
+# Initial state: |0⟩_pos ⊗ |1⟩_coin (coin in |1⟩)
+qc.x(0)  # Set coin to |1⟩
 
-# Measure position
-qc.measure(pos, c)
+for _ in range(n_steps):
+    apply_coin(qc, 0)
+    apply_shift(qc, 0, 1, 2)
 
-# Simulate
-sim = AerSimulator()
-tqc = transpile(qc, sim)
-result = sim.run(tqc, shots=1024).result()
-counts = result.get_counts()
+# Get final statevector
+state = Statevector.from_instruction(qc)
+counts = state.probabilities_dict()
+
+# Plot probabilities of position+coin
 plot_histogram(counts)
-plt.title(f"Quantum Walk: {num_steps} steps on line with 8 positions")
+plt.title(f"{n_steps}-step Quantum Walk (DTQW)")
 plt.show()

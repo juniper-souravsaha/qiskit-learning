@@ -9,8 +9,10 @@ from fractions import Fraction
 from qiskit_aer import AerSimulator
 
 
-N = 35
-a = 3
+# Specify variables
+N = 15
+a = 2 # Choose a random coprime to N, e.g., 2, 4, 7, 8, 11, or 13
+N_COUNT = 4  # number of counting qubits
 
 # Ensure a and N are co-prime
 assert gcd(a, N) == 1
@@ -40,28 +42,24 @@ def c_amod15(a, power):
         raise ValueError("'a' must be 2,4,7,8,11 or 13")
     U = QuantumCircuit(4)
     for _iteration in range(power):
-        if a in [2,13]:
+        if a in [2, 7,13]:
             U.swap(2,3)
             U.swap(1,2)
             U.swap(0,1)
-        if a in [7,8]:
+        if a in [8]:
             U.swap(0,1)
             U.swap(1,2)
             U.swap(2,3)
         if a in [4, 11]:
             U.swap(1,3)
             U.swap(0,2)
-        if a in [7,11,13]:
+        if a in [7, 11, 13]:
             for q in range(4):
                 U.x(q)
     U = U.to_gate()
     U.name = f"{a}^{power} mod 15"
     c_U = U.control()
     return c_U
-
-# Specify variables
-N_COUNT = 8  # number of counting qubits
-a = 7
 
 def qft_dagger(n):
     """n-qubit QFTdagger the first n qubits in circ"""
@@ -136,6 +134,6 @@ def a2jmodN(a, j, N):
         a = np.mod(a**2, N)
     return a
 
-a2jmodN(7, 2049, 53)
+a2jmodN(a, 1024, N)
 
 
